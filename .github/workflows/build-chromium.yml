@@ -35,7 +35,10 @@ jobs:
           git \
           pkg-config \
           ninja-build \
-          build-essential
+          build-essential \
+          libglib2.0-0 \
+          libatk1.0-0 \
+          libpangoft2-1.0-0
         python3 -m pip install httplib2 six pysocks
     
     - name: Create build directories
@@ -73,6 +76,12 @@ jobs:
         cd ${{ github.workspace }}
         ./utils/domain_substitution.py apply -r domain_regex.list -f domain_substitution.list -c build/domsubcache.tar.gz build/src
       timeout-minutes: 30
+    
+    - name: Install Linux sysroot
+      run: |
+        cd build/src
+        python3 build/linux/sysroot_scripts/install-sysroot.py --arch=amd64
+      timeout-minutes: 60
     
     - name: Build GN
       run: |
