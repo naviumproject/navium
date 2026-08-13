@@ -28,14 +28,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           quilt \
-          python3.10 \
-          python3-httplib2 \
-          python3-six \
+          python3 \
+          python3-pip \
           curl \
           wget \
           git \
           pkg-config \
-          ninja-build
+          ninja-build \
+          build-essential
+        python3 -m pip install httplib2 six pysocks
     
     - name: Create build directories
       run: |
@@ -45,7 +46,9 @@ jobs:
     - name: Download Chromium source (Tarball)
       run: |
         cd ${{ github.workspace }}
+        python3 --version
         ./utils/downloads.py retrieve -i downloads.ini -c build/download_cache
+        echo "Download completed successfully"
       timeout-minutes: 120
     
     - name: Unpack Chromium source
@@ -108,5 +111,5 @@ jobs:
       with:
         name: build-logs-${{ matrix.platform }}
         path: |
-          build/src/out/Default/build.log
+          build/src/out/Default/
         retention-days: 5
