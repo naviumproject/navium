@@ -1,2 +1,2 @@
 # navium
-<img src="[navium_iconandtitle.png]">
+<img src="navium_iconandtitle.png">
