@@ -1,0 +1,112 @@
+name: Build Chromium
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            platform: linux_x64
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          quilt \
+          python3.10 \
+          python3-httplib2 \
+          python3-six \
+          curl \
+          wget \
+          git \
+          pkg-config \
+          ninja-build
+    
+    - name: Create build directories
+      run: |
+        mkdir -p build/download_cache
+        mkdir -p build/src
+    
+    - name: Download Chromium source (Tarball)
+      run: |
+        cd ${{ github.workspace }}
+        ./utils/downloads.py retrieve -i downloads.ini -c build/download_cache
+      timeout-minutes: 120
+    
+    - name: Unpack Chromium source
+      run: |
+        cd ${{ github.workspace }}
+        ./utils/downloads.py unpack -i downloads.ini -c build/download_cache build/src
+      timeout-minutes: 30
+    
+    - name: Apply ungoogled-chromium patches
+      run: |
+        cd ${{ github.workspace }}
+        ./utils/patches.py apply build/src patches
+      timeout-minutes: 30
+    
+    - name: Prune binaries
+      run: |
+        cd ${{ github.workspace }}
+        ./utils/prune_binaries.py build/src pruning.list
+    
+    - name: Apply domain substitution
+      run: |
+        cd ${{ github.workspace }}
+        ./utils/domain_substitution.py apply -r domain_regex.list -f domain_substitution.list -c build/domsubcache.tar.gz build/src
+      timeout-minutes: 30
+    
+    - name: Build GN
+      run: |
+        mkdir -p build/src/out/Default
+        cd build/src
+        python3 tools/gn/bootstrap/bootstrap.py --skip-generate-buildfiles -j4 -o out/Default/
+      timeout-minutes: 60
+    
+    - name: Generate build files
+      run: |
+        cd build/src
+        cp ${{ github.workspace }}/flags.gn out/Default/args.gn
+        ./out/Default/gn gen out/Default --fail-on-unused-args
+      timeout-minutes: 30
+    
+    - name: Build Chromium
+      run: |
+        cd build/src
+        ninja -C out/Default chrome chromedriver chrome_sandbox -j4
+      timeout-minutes: 240
+    
+    - name: Upload build artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: chromium-build-${{ matrix.platform }}
+        path: |
+          build/src/out/Default/chrome
+          build/src/out/Default/chromedriver
+          build/src/out/Default/chrome_sandbox
+        retention-days: 30
+    
+    - name: Upload logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ matrix.platform }}
+        path: |
+          build/src/out/Default/build.log
+        retention-days: 5
