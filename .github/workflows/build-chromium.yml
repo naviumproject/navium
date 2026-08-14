@@ -36,11 +36,6 @@ jobs:
           pkg-config \
           ninja-build \
           build-essential \
-          libglib2.0-0 \
-          libatk1.0-0 \
-          libpangoft2-1.0-0 \
-          git-core \
-          gnupg \
           flex \
           bison \
           gperf \
@@ -58,23 +53,18 @@ jobs:
           libxi-dev \
           libxinerama-dev \
           libxdamage-dev \
-          libxcb-record0-dev \
           libfreetype6-dev \
           libpulse-dev \
           libpci-dev \
-          librasterbar-dev \
+          libtorrent-rasterbar-dev \
           libsnappy-dev \
-          libspeechd-dev \
           libsrtp2-dev \
           libudev-dev \
           libva-dev \
           libvpx-dev \
           libxslt1-dev \
           libzip-dev \
-          libzstd-dev \
-          opencl-headers \
-          xclip \
-          xvfb
+          libzstd-dev
         python3 -m pip install httplib2 six pysocks
     
     - name: Setup depot_tools
