@@ -1,0 +1,42 @@
+--- a/chrome/common/webui_url_constants.cc
++++ b/chrome/common/webui_url_constants.cc
+@@ -14,6 +14,7 @@ namespace chrome {
+ 
+ const char kAboutScheme[] = "about";
+ const char kChromeScheme[] = "chrome";
++const char kNaviumScheme[] = "nav";
+ 
+ const char kChromeUIAboutHost[] = "about";
+ const char kChromeUIAccessibilityHost[] = "accessibility";
+@@ -119,6 +120,8 @@ bool IsSystemWebUIHost(std::string_view host) {
+ 
+ base::span<const base::cstring_view> ChromeURLHosts() {
+   static constexpr auto kChromeURLHosts = std::to_array<base::cstring_view>({
++      "ium",
++      "resources",
+       kChromeUIAboutHost,
+       kChromeUIAccessibilityHost,
+       kChromeUIActorInternalsHost,
+--- a/chrome/common/webui_url_constants.h
++++ b/chrome/common/webui_url_constants.h
+@@ -14,6 +14,7 @@ namespace chrome {
+ 
+ extern const char kAboutScheme[];
+ extern const char kChromeScheme[];
++extern const char kNaviumScheme[];
+ 
+ extern const char kChromeUIAboutHost[];
+ extern const char kChromeUIAccessibilityHost[];
+--- a/chrome/browser/chrome_content_browser_client.cc
++++ b/chrome/browser/chrome_content_browser_client.cc
+@@ -72,6 +72,10 @@ void ChromeContentBrowserClient::RegisterProtocolHandler(
+   registry->RegisterCreateProtocolHandlerWebUIController(
+       chrome::kChromeScheme,
+       base::BindRepeating(&CreateWebUIControllerForChrome));
++
++  registry->RegisterCreateProtocolHandlerWebUIController(
++      "nav",
++      base::BindRepeating(&CreateWebUIControllerForChrome));
+ }
+ 
+ // static
