@@ -1,0 +1,20 @@
+--- a/chrome/app/BUILD.gn
++++ b/chrome/app/BUILD.gn
+@@
+ executable("chrome") {
++  output_name = "navium"
+   sources = [
+     "chrome_exe_main_win.cc",
+   ]
+ }
+--- a/chrome/app/chrome_exe.rc
++++ b/chrome/app/chrome_exe.rc
+@@
+-IDI_CHROME ICON "theme/chrome.ico"
++IDI_CHROME ICON "theme/navium_ico.ico"
+--- a/chrome/app/theme/BUILD.gn
++++ b/chrome/app/theme/BUILD.gn
+@@
+-  "chrome.ico",
++  "navium_ico.ico",
+*** End Patch

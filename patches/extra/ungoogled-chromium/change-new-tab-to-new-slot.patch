@@ -5,7 +5,18 @@
  
  // navium: New Slot instead of New Tab
 -const char kBrowserTabTitleFormat[] = "%s";
-+const char kBrowserTabTitleFormat[] = "New Slot";
++const char kBrowserTabTitleFormat[] = "%s";
++
++// navium: Use "Nueva Ranura" on Spanish, otherwise "New Slot".
++const char* GetNaviumTabTitleForCurrentLocale() {
++  const std::string locale = l10n_util::GetApplicationLocale();
++  const std::string lower_locale = base::ToLowerASCII(locale);
++
++  if (lower_locale == "es" || lower_locale.rfind("es-", 0) == 0)
++    return "Nueva Ranura";
++
++  return "New Slot";
++}
  
  const char kChromeUINewTabPageThirdPartyURL[] =
      "chrome://new-tab-page/third-party/";

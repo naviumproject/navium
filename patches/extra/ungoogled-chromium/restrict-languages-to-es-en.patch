@@ -1,11 +1,16 @@
 --- a/ui/base/l10n/l10n_util.h
 +++ b/ui/base/l10n/l10n_util.h
-@@ -15,6 +15,9 @@
+@@ -15,6 +15,13 @@
  
  namespace l10n_util {
  
-+// navium: Restrict languages to Spanish and English only
++// navium: Restrict languages to Spanish and English only.
 +constexpr const char* kNaviumSupportedLanguages[] = {"en", "es"};
++
++inline bool IsNaviumSupportedLanguage(const std::string& locale) {
++  return locale == "en" || locale == "es" ||
++         locale.rfind("en-", 0) == 0 || locale.rfind("es-", 0) == 0;
++}
 +
  enum TextDirection {
    UNKNOWN_DIRECTION = 0,
