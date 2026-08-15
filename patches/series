@@ -98,6 +98,8 @@ extra/ungoogled-chromium/enable-navium-webui-scheme.patch
 extra/ungoogled-chromium/first-run-page.patch
 extra/ungoogled-chromium/add-flag-to-reduce-system-info.patch
 extra/ungoogled-chromium/add-flag-to-remove-client-hints.patch
+extra/ungoogled-chromium/change-new-tab-to-new-slot.patch
+extra/ungoogled-chromium/restrict-languages-to-es-en.patch
 extra/ungoogled-chromium/enable-extra-locales.patch
 extra/ungoogled-chromium/remove-pac-size-limit.patch
 extra/ungoogled-chromium/enable-certificate-transparency-and-add-flag.patch

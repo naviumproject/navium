@@ -1,0 +1,12 @@
+--- a/chrome/common/webui_url_constants.cc
++++ b/chrome/common/webui_url_constants.cc
+@@ -200,7 +200,7 @@ const char kChromeUIUntrustedNewTabPageURL[] =
+     "chrome-untrusted://new-tab-page/";
+ 
+ // navium: New Slot instead of New Tab
+-const char kBrowserTabTitleFormat[] = "%s";
++const char kBrowserTabTitleFormat[] = "New Slot";
+ 
+ const char kChromeUINewTabPageThirdPartyURL[] =
+     "chrome://new-tab-page/third-party/";
+
