@@ -1,20 +1,29 @@
 --- a/chrome/app/BUILD.gn
 +++ b/chrome/app/BUILD.gn
-@@
- executable("chrome") {
+@@ -25,7 +25,7 @@ executable("chrome") {
+   if (is_win) {
+     sources += [
+       "chrome_exe_main_win.cc",
+       "chrome_exe.rc",
+     ]
+   }
 +  output_name = "navium"
-   sources = [
-     "chrome_exe_main_win.cc",
-   ]
- }
+ 
 --- a/chrome/app/chrome_exe.rc
 +++ b/chrome/app/chrome_exe.rc
-@@
+@@ -1,5 +1,5 @@
+ #include "windows.h"
 -IDI_CHROME ICON "theme/chrome.ico"
 +IDI_CHROME ICON "theme/navium_ico.ico"
+ 
 --- a/chrome/app/theme/BUILD.gn
 +++ b/chrome/app/theme/BUILD.gn
-@@
--  "chrome.ico",
-+  "navium_ico.ico",
+@@ -15,7 +15,7 @@ action("repack_chrome_100_percent") {
+ action_foreach("repack_chrome_resources") {
+   script = "//tools/grit/grit.py"
+ 
+-  sources = [ "chrome.ico" ]
++  sources = [ "navium_ico.ico" ]
+   outputs = [ "$root_gen_dir/chrome_$percent.pak" ]
+ }
 *** End Patch

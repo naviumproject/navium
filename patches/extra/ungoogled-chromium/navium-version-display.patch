@@ -1,0 +1,55 @@
+--- a/components/version_ui_strings.grdp
++++ b/components/version_ui_strings.grdp
+@@ -4,10 +4,13 @@
+     About Version
+   </message>
+   <message name="IDS_VERSION_UI_OFFICIAL" desc="official build on the about:version page">
+-    Official Build
++    Official Build, navium
+   </message>
+   <message name="IDS_VERSION_UI_UNOFFICIAL" desc="unofficial build on the about:version page">
+-    Developer Build
++    Developer Build, navium
+   </message>
++  <message name="IDS_VERSION_UI_NAVIUM" desc="navium version label">
++    navium version
++  </message>
+   <message name="IDS_VERSION_UI_32BIT" desc="32-bit on the chrome://version page">
+     (32-bit)
+   </message>
+--- a/chrome/browser/ui/webui/version/version_ui.cc
++++ b/chrome/browser/ui/webui/version/version_ui.cc
+@@ -40,6 +40,23 @@ std::string GetVersionString() {
+   return version_ui_strings;
+ }
+ 
++std::string GetNaviumVersion() {
++  std::string navium_version = "0.0.3";
++#ifdef NAVIUM_VERSION_FILE
++  base::FilePath version_file(NAVIUM_VERSION_FILE);
++  if (base::PathExists(version_file)) {
++    if (base::ReadFileToString(version_file, &navium_version)) {
++      base::TrimWhitespaceASCII(navium_version, base::TRIM_ALL, &navium_version);
++    }
++  }
++#endif
++  return navium_version;
++}
++
+   void VersionUIDataSource::StartDataRequest() {
+     source->AddString("version", GetVersionString());
++    source->AddString("navium_version", GetNaviumVersion());
+   }
+--- a/chrome/browser/ui/webui/version/version_ui.html
++++ b/chrome/browser/ui/webui/version/version_ui.html
+@@ -30,6 +30,8 @@
+       <span class="label">Version</span>
+       <span class="value" id="version">[[version]]</span>
+     </div>
++    <div>
++      <span class="label">[[i18n('IDS_VERSION_UI_NAVIUM')]]</span>
++      <span class="value" id="navium-version">[[navium_version]]</span>
++    </div>
+     <div id="os-name"></div>
+     <div id="os-version"></div>
+*** End Patch

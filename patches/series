@@ -101,6 +101,7 @@ extra/ungoogled-chromium/add-flag-to-remove-client-hints.patch
 extra/ungoogled-chromium/change-new-tab-to-new-slot.patch
 extra/ungoogled-chromium/restrict-languages-to-es-en.patch
 extra/ungoogled-chromium/navium-embed-icon.patch
+extra/ungoogled-chromium/navium-version-display.patch
 extra/ungoogled-chromium/enable-extra-locales.patch
 extra/ungoogled-chromium/remove-pac-size-limit.patch
 extra/ungoogled-chromium/enable-certificate-transparency-and-add-flag.patch
