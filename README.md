@@ -19,7 +19,9 @@ to fork navium correctly you do this:
 - congrats you have forked navium! now go do whatever you want with it.
 -------------------------------------------------------------------------------------------------------
 
-## notes!! (PLEASE READ)
+## notes
+
+notes!! (PLEASE READ!!!!!)
 
 (note that my coding knowledge isnt that good and everything may break so github copilot probably is gonna fix tha-)
 (note 2 that i dont always update my fork so expect it to be heavily outdated as i dont have a schedule for updates or something lol)
