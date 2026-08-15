@@ -1,0 +1,278 @@
+--- a/chrome/browser/ui/webui/chrome_web_ui_configs.cc
++++ b/chrome/browser/ui/webui/chrome_web_ui_configs.cc
+@@
+ #include "chrome/browser/ui/webui/subresource_filter/subresource_filter_internals_ui.h"
+ #include "chrome/browser/ui/webui/sync_internals/sync_internals_ui.h"
+ #include "chrome/browser/ui/webui/translate_internals/translate_internals_ui.h"
++#include "chrome/browser/ui/webui/navium_readme.h"
+ #include "chrome/browser/ui/webui/usb_internals/usb_internals_ui.h"
+ #include "chrome/browser/ui/webui/version/version_ui.h"
+@@
+   map.AddWebUIConfig(std::make_unique<SiteEngagementUIConfig>());
+   map.AddWebUIConfig(std::make_unique<SyncInternalsUIConfig>());
+   map.AddWebUIConfig(std::make_unique<TranslateInternalsUIConfig>());
++  map.AddWebUIConfig(std::make_unique<NaviumReadmeUIConfig>());
+   map.AddWebUIConfig(std::make_unique<UsbInternalsUIConfig>());
+   map.AddWebUIConfig(std::make_unique<user_actions_ui::UserActionsUIConfig>());
+   map.AddWebUIConfig(std::make_unique<VersionUIConfig>());
+--- a/chrome/common/webui_url_constants.cc
++++ b/chrome/common/webui_url_constants.cc
+@@
+   static constexpr auto kChromeURLHosts = std::to_array<base::cstring_view>({
++      "readme",
+       kChromeUIAboutHost,
+       kChromeUIAccessibilityHost,
+       kChromeUIActorInternalsHost,
+--- /dev/null
++++ b/chrome/browser/ui/webui/navium_readme.h
+@@
++#ifndef CHROME_BROWSER_UI_WEBUI_NAVIUM_README_H_
++#define CHROME_BROWSER_UI_WEBUI_NAVIUM_README_H_
++
++#include <algorithm>
++#include <string>
++#include <vector>
++
++#include "base/files/file_path.h"
++#include "base/files/file_util.h"
++#include "base/strings/string_util.h"
++#include "content/public/browser/url_data_source.h"
++#include "content/public/browser/web_ui.h"
++#include "content/public/browser/web_ui_controller.h"
++#include "content/public/browser/webui_config.h"
++#include "services/network/public/mojom/content_security_policy.mojom.h"
++
++namespace {
++
++std::string EscapeHtml(const std::string& input) {
++  std::string out;
++  out.reserve(input.size());
++  for (char ch : input) {
++    switch (ch) {
++      case '&': out += "&amp;"; break;
++      case '<': out += "&lt;"; break;
++      case '>': out += "&gt;"; break;
++      case '"': out += "&quot;"; break;
++      default: out += ch; break;
++    }
++  }
++  return out;
++}
++
++std::string ReplaceAll(std::string value,
++                       const std::string& from,
++                       const std::string& to) {
++  size_t pos = 0;
++  while ((pos = value.find(from, pos)) != std::string::npos) {
++    value.replace(pos, from.length(), to);
++    pos += to.length();
++  }
++  return value;
++}
++
++base::FilePath ResolveNaviumRoot() {
++  base::FilePath exe_dir;
++  if (base::PathService::Get(base::DIR_EXE, &exe_dir)) {
++    std::vector<base::FilePath> candidates = {
++        exe_dir,
++        exe_dir.DirName(),
++        exe_dir.DirName().DirName(),
++        base::FilePath(FILE_PATH_LITERAL("."))};
++    for (const auto& candidate : candidates) {
++      base::FilePath readme = candidate.AppendASCII("README.md");
++      if (base::PathExists(readme))
++        return candidate;
++    }
++  }
++  return base::FilePath(FILE_PATH_LITERAL("."));
++}
++
++base::FilePath ResolveReadmeAssetPath(const std::string& relative_path) {
++  base::FilePath root = ResolveNaviumRoot();
++  return root.AppendASCII(relative_path);
++}
++
++std::string ReadReadmeFile() {
++  base::FilePath readme = ResolveNaviumRoot().AppendASCII("README.md");
++  std::string content;
++  if (!base::ReadFileToString(readme, &content))
++    return "<h1>navium</h1><p>README.md not found.</p>";
++  return content;
++}
++
++std::string MarkdownToHtml(const std::string& markdown) {
++  std::string text = markdown;
++  text = ReplaceAll(text, "\r\n", "\n");
++  text = ReplaceAll(text, "\r", "\n");
++  text = ReplaceAll(text, "src=\"", "src=\"nav://readme/assets/");
++  text = ReplaceAll(text, "href=\"https://github.com/", "href=\"https://github.com/");
++
++  std::vector<std::string> lines = base::SplitString(text, "\n", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++  std::string html;
++  html.reserve(text.size() * 2);
++
++  bool in_list = false;
++  bool in_paragraph = false;
++  for (size_t i = 0; i < lines.size(); ++i) {
++    std::string line = lines[i];
++    std::string trimmed = base::TrimWhitespaceASCII(line, base::TRIM_ALL);
++
++    if (trimmed.empty()) {
++      if (in_list) {
++        html += "</ul>\n";
++        in_list = false;
++      }
++      if (in_paragraph) {
++        html += "</p>\n";
++        in_paragraph = false;
++      }
++      continue;
++    }
++
++    if (base::StartsWith(trimmed, "# ", base::CompareCase::SENSITIVE)) {
++      if (in_list) { html += "</ul>\n"; in_list = false; }
++      if (in_paragraph) { html += "</p>\n"; in_paragraph = false; }
++      html += "<h1>" + EscapeHtml(trimmed.substr(2)) + "</h1>\n";
++      continue;
++    }
++
++    if (base::StartsWith(trimmed, "## ", base::CompareCase::SENSITIVE)) {
++      if (in_list) { html += "</ul>\n"; in_list = false; }
++      if (in_paragraph) { html += "</p>\n"; in_paragraph = false; }
++      html += "<h2>" + EscapeHtml(trimmed.substr(3)) + "</h2>\n";
++      continue;
++    }
++
++    if (base::StartsWith(trimmed, "- ", base::CompareCase::SENSITIVE)) {
++      if (!in_list) {
++        html += "<ul>\n";
++        in_list = true;
++      }
++      html += "<li>" + EscapeHtml(trimmed.substr(2)) + "</li>\n";
++      continue;
++    }
++
++    if (base::StartsWith(trimmed, "* ", base::CompareCase::SENSITIVE)) {
++      if (!in_list) {
++        html += "<ul>\n";
++        in_list = true;
++      }
++      html += "<li>" + EscapeHtml(trimmed.substr(2)) + "</li>\n";
++      continue;
++    }
++
++    if (base::StartsWith(trimmed, "> ", base::CompareCase::SENSITIVE)) {
++      if (in_paragraph) { html += "</p>\n"; in_paragraph = false; }
++      html += "<blockquote>" + EscapeHtml(trimmed.substr(2)) + "</blockquote>\n";
++      continue;
++    }
++
++    if (trimmed.find("<img") != std::string::npos ||
++        trimmed.find("href=") != std::string::npos ||
++        trimmed.find("[") != std::string::npos) {
++      if (in_paragraph) { html += "</p>\n"; in_paragraph = false; }
++      html += trimmed + "\n";
++      continue;
++    }
++
++    if (!in_paragraph) {
++      html += "<p>";
++      in_paragraph = true;
++    }
++    html += EscapeHtml(trimmed) + " ";
++  }
++
++  if (in_list) html += "</ul>\n";
++  if (in_paragraph) html += "</p>\n";
++
++  return "<!doctype html><html><head><meta charset=\"utf-8\"><style>"
++         "body{margin:0;padding:32px 16px;background:#f6f8fa;color:#24292f;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Helvetica,Arial,sans-serif;line-height:1.6;}"
++         ".navium-readme{max-width:980px;margin:0 auto;padding:32px 40px 56px;background:#fff;border:1px solid #d0d7de;border-radius:8px;box-shadow:0 1px 3px rgba(27,31,36,0.08);}"
++         "img{max-width:100%;height:auto;display:block;margin:18px auto;border-radius:6px;border:1px solid #d0d7de;box-shadow:0 1px 2px rgba(27,31,36,0.08);}"
++         "a{color:#0969da;text-decoration:none;} a:hover{text-decoration:underline;}"
++         "p,li,blockquote{font-size:16px;}"
++         "h1,h2,h3,h4,h5,h6{margin-top:24px;margin-bottom:16px;font-weight:600;line-height:1.25;color:#24292f;}"
++         "h1{padding-bottom:.3em;border-bottom:1px solid #d0d7de;font-size:2em;}"
++         "h2{padding-bottom:.3em;border-bottom:1px solid #d0d7de;font-size:1.5em;}"
++         "h3{font-size:1.25em;}"
++         "p{margin:0 0 16px;}"
++         "ul,ol{padding-left:2em;margin:0 0 16px;}"
++         "li+li{margin-top:4px;}"
++         "code{background:rgba(175,184,193,0.2);padding:.2em .4em;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Consolas,\"Liberation Mono\",Menlo,monospace;font-size:85%;}"
++         "pre{background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:16px;overflow:auto;margin:0 0 16px;}"
++         "pre code{background:transparent;padding:0;}"
++         "blockquote{color:#57606a;border-left:4px solid #d0d7de;padding:0 0 0 16px;margin:0 0 16px;}"
++         "hr{height:1px;background-color:#d0d7de;border:0;margin:24px 0;}"
++         "table{border-collapse:collapse;width:100%;margin:0 0 16px;}"
++         "th,td{padding:6px 13px;border:1px solid #d0d7de;text-align:left;}"
++         "th{background:#f6f8fa;font-weight:600;}"
++         "@media (prefers-color-scheme: dark){body{background:#0d1117;color:#c9d1d9;} .navium-readme{background:#0d1117;border-color:#30363d;box-shadow:none;} a{color:#58a6ff;} img{border-color:#30363d;} h1,h2,h3,h4,h5,h6{color:#c9d1d9;} h1,h2{border-color:#30363d;} code{background:rgba(110,118,129,0.4);} pre{background:#161b22;border-color:#30363d;} blockquote{color:#8b949e;border-left-color:#30363d;} th,td{border-color:#30363d;} th{background:#161b22;}}</style></head><body><div class=\"navium-readme\">" + html + "</div></body></html>";
++}
++
++}  // namespace
++
++class NaviumReadmeDataSource : public content::URLDataSource {
++ public:
++  std::string GetSource() override { return "readme"; }
++
++  std::string GetMimeType(const GURL& url) override {
++    std::string path = url.path();
++    if (base::EndsWith(path, ".png", base::CompareCase::INSENSITIVE_ASCII))
++      return "image/png";
++    if (base::EndsWith(path, ".jpg", base::CompareCase::INSENSITIVE_ASCII) ||
++        base::EndsWith(path, ".jpeg", base::CompareCase::INSENSITIVE_ASCII))
++      return "image/jpeg";
++    if (base::EndsWith(path, ".gif", base::CompareCase::INSENSITIVE_ASCII))
++      return "image/gif";
++    if (base::EndsWith(path, ".svg", base::CompareCase::INSENSITIVE_ASCII))
++      return "image/svg+xml";
++    return "text/html; charset=utf-8";
++  }
++
++  std::string GetContentSecurityPolicy(network::mojom::CSPDirectiveName directive) override {
++    if (directive == network::mojom::CSPDirectiveName::ScriptSrc)
++      return "script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src nav: data: 'self';";
++    return std::string();
++  }
++
++  void StartDataRequest(const GURL& url,
++                        const content::WebContents::Getter& wc_getter,
++                        GotDataCallback callback) override {
++    std::string path = url.path();
++    if (path.rfind("/assets/", 0) == 0) {
++      std::string asset_rel = path.substr(strlen("/assets/"));
++      base::FilePath asset_path = ResolveReadmeAssetPath(asset_rel);
++      std::string data;
++      if (base::ReadFileToString(asset_path, &data)) {
++        std::move(callback).Run(
++            base::MakeRefCounted<base::RefCountedBytes>(reinterpret_cast<const unsigned char*>(data.data()), data.size()));
++        return;
++      }
++      std::move(callback).Run(base::MakeRefCounted<base::RefCountedString>("<h1>Asset not found</h1>"));
++      return;
++    }
++
++    std::string html = MarkdownToHtml(ReadReadmeFile());
++    std::move(callback).Run(base::MakeRefCounted<base::RefCountedString>(std::move(html)));
++  }
++};
++
++class NaviumReadme;
++class NaviumReadmeUIConfig : public content::DefaultWebUIConfig<NaviumReadme> {
++ public:
++  NaviumReadmeUIConfig() : DefaultWebUIConfig("nav", "readme") {}
++};
++
++class NaviumReadme : public content::WebUIController {
++ public:
++  explicit NaviumReadme(content::WebUI* web_ui)
++      : content::WebUIController(web_ui) {
++    content::URLDataSource::Add(Profile::FromWebUI(web_ui),
++                                std::make_unique<NaviumReadmeDataSource>());
++  }
++  NaviumReadme(const NaviumReadme&) = delete;
++  NaviumReadme& operator=(const NaviumReadme&) = delete;
++};
++
++#endif  // CHROME_BROWSER_UI_WEBUI_NAVIUM_README_H_
+*** End Patch
