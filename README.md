@@ -1,7 +1,8 @@
 <img src="navium_iconandtitle.png">
 
 # navium
-*a ungoogled-chromium fork that adds absolutely idk things --aynonyaz, creator of navium*
+*a ungoogled-chromium fork that adds absolutely idk things
+--aynonyaz, creator of navium*
 
 # howtouse
 so if u forked this repo uh this repo contains patches for chromium. this means you have to download [Chromium's source code](https://github.com/chromium/chromium) first.
@@ -9,13 +10,13 @@ so if u forked this repo uh this repo contains patches for chromium. this means 
 to fork navium correctly you do this:
 
 - first you Fork [navium](https://github.com/naviumproject/navium).
--
+
 - now that you forked [navium](https://github.com/naviumproject/navium), you are gonna open a codespace/open it in Visual Studio Code
--
+
 - now download [Chromium's source code](https://github.com/chromium/chromium).
--
+
 - lastly, apply the patches in the repo.
--
+
 - congrats you have forked navium! now go do whatever you want with it.
 -------------------------------------------------------------------------------------------------------
 
